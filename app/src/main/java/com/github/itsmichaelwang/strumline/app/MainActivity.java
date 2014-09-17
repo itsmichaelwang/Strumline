@@ -31,6 +31,7 @@ public class MainActivity extends ActionBarActivity {
     private Integer loopStart = -1;
     private Integer loopEnd = -1;
 
+    // test
     private Handler mHandler;
 
     @Override
