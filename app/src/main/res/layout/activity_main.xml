@@ -78,4 +78,24 @@
         android:layout_above="@+id/txt_loopstart"
         android:layout_toRightOf="@+id/txt_loopstart" />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Set Current Position as Loop Start"
+        android:id="@+id/btn_loopstart"
+        android:layout_below="@+id/txt_loopend"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Set Current Position as Loop End"
+        android:id="@+id/btn_loopend"
+        android:layout_below="@+id/btn_loopstart"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignRight="@+id/btn_loopstart"
+        android:layout_alignEnd="@+id/btn_loopstart" />
+
 </RelativeLayout>

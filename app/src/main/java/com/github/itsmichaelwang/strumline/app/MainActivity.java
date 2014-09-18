@@ -17,7 +17,7 @@ import android.widget.TextView;
 
 import java.util.concurrent.TimeUnit;
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ActionBarActivity implements View.OnClickListener{
 
     private static final int SELECT_FILE_REQUEST = 1;
     private static final int UPDATE_PLAYBACK_POSITION = 2;
@@ -44,16 +44,12 @@ public class MainActivity extends ActionBarActivity {
         txtPosition = (TextView) findViewById(R.id.txt_position);
 
         Button btnSelect = (Button) findViewById(R.id.btn_select);
-        btnSelect.setOnClickListener(new Button.OnClickListener() {
+        Button btnLoopStart = (Button) findViewById(R.id.btn_loopstart);
+        Button btnLoopEnd = (Button) findViewById(R.id.btn_loopend);
 
-            // Select a song to be repeated
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                intent.setType("audio/*");
-                startActivityForResult(intent, SELECT_FILE_REQUEST);
-            }
-        });
+        btnSelect.setOnClickListener(this);
+        btnLoopStart.setOnClickListener(this);
+        btnLoopEnd.setOnClickListener(this);
 
         mHandler = new Handler() {
             @Override
@@ -66,6 +62,28 @@ public class MainActivity extends ActionBarActivity {
                 }
             }
         };
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.btn_select:
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("audio/*");
+                startActivityForResult(intent, SELECT_FILE_REQUEST);
+                break;
+            case R.id.btn_loopstart:
+                int loopStart = mediaPlayer.getCurrentPosition();
+                seekBar.setSelectedMinValue(loopStart);
+                mediaPlayer.seekTo(loopStart);
+                updateLoop(loopStart, this.loopEnd);
+                break;
+            case R.id.btn_loopend:
+                int loopEnd = mediaPlayer.getCurrentPosition();
+                seekBar.setSelectedMaxValue(loopEnd);
+                updateLoop(this.loopStart, loopEnd);
+                break;
+        }
     }
 
     @Override
