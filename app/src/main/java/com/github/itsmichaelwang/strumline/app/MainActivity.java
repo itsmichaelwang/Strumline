@@ -70,17 +70,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         btnSetLoopStart.setOnClickListener(this);
         btnSetLoopStop.setOnClickListener(this);
 
-        mHandler = new Handler() {
-            @Override
-            public void handleMessage(Message inputMessage) {
-                if (inputMessage.what == UPDATE_PLAYBACK_POSITION) {
-                    Integer currentPos = (Integer) inputMessage.obj;
-                    txtCurPos.setText(
-                        TimeUnit.MILLISECONDS.toMinutes(currentPos) + ":" +
-                        String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(currentPos) % 60));
-                }
-            }
-        };
+        mHandler = new Handler();
     }
 
     @Override
@@ -181,9 +171,15 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                                     mediaPlayer.seekTo(loopStart);
                                 }
 
-                                // Send current time to UI
-                                Message m = mHandler.obtainMessage(UPDATE_PLAYBACK_POSITION, currentPosition);
-                                m.sendToTarget();
+                                mHandler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        int currentPos = mediaPlayer.getCurrentPosition();
+                                        txtCurPos.setText(
+                                            TimeUnit.MILLISECONDS.toMinutes(currentPos) + ":" +
+                                            String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(currentPos) % 60));
+                                    }
+                                });
 
                                 try {
                                     Thread.sleep(500);
