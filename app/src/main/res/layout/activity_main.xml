@@ -17,85 +17,96 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Select Song from File..."
-        android:id="@+id/btn_select"
+        android:text="@string/btn_song_select"
+        android:id="@+id/btn_song_select"
         android:layout_marginTop="80dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
 
-    <EditText
+    <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:ems="10"
-        android:id="@+id/txt_loopstart"
-        android:layout_below="@+id/txt_position"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
-
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:id="@+id/txt_loopend"
-        android:layout_below="@+id/txt_loopstart"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Loop Start"
-        android:id="@+id/textView"
-        android:layout_above="@+id/txt_loopend"
-        android:layout_toRightOf="@+id/txt_loopstart" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Loop End"
-        android:id="@+id/textView2"
-        android:layout_alignBottom="@+id/txt_loopend"
-        android:layout_toRightOf="@+id/txt_loopend" />
-
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/txt_position"
-        android:layout_below="@+id/btn_select"
+        android:text="@string/btn_set_loop_start"
+        android:id="@+id/btn_set_loop_start"
+        android:layout_below="@+id/txt_loop_stop"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_toLeftOf="@+id/textView" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Position"
-        android:id="@+id/textView3"
-        android:layout_above="@+id/txt_loopstart"
-        android:layout_toRightOf="@+id/txt_loopstart" />
+        android:visibility="gone" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Set Current Position as Loop Start"
-        android:id="@+id/btn_loopstart"
-        android:layout_below="@+id/txt_loopend"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Set Current Position as Loop End"
-        android:id="@+id/btn_loopend"
-        android:layout_below="@+id/btn_loopstart"
+        android:text="@string/btn_set_loop_stop"
+        android:id="@+id/btn_set_loop_stop"
+        android:layout_below="@+id/btn_set_loop_start"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_alignRight="@+id/btn_loopstart"
-        android:layout_alignEnd="@+id/btn_loopstart" />
+        android:layout_alignRight="@+id/btn_set_loop_start"
+        android:layout_alignEnd="@+id/btn_set_loop_start"
+        android:visibility="gone" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/txt_cur_pos"
+        android:layout_below="@+id/btn_song_select"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_toLeftOf="@+id/txtView_loop_start"
+        android:visibility="gone"
+        android:inputType="text" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:id="@+id/txt_loop_start"
+        android:layout_below="@+id/txt_cur_pos"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:visibility="gone"
+        android:inputType="text" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:id="@+id/txt_loop_stop"
+        android:layout_below="@+id/txt_loop_start"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:visibility="gone"
+        android:inputType="text" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/txtView_cur_position"
+        android:id="@+id/txtView_cur_position"
+        android:layout_above="@+id/txt_loop_start"
+        android:layout_toRightOf="@+id/txt_loop_start"
+        android:visibility="gone" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/txtView_loop_start"
+        android:id="@+id/txtView_loop_start"
+        android:layout_above="@+id/txt_loop_stop"
+        android:layout_toRightOf="@+id/txt_loop_start"
+        android:visibility="gone" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/txtView_loop_stop"
+        android:id="@+id/txtView_loop_stop"
+        android:layout_alignBottom="@+id/txt_loop_stop"
+        android:layout_toRightOf="@+id/txt_loop_stop"
+        android:visibility="gone" />
 
 </RelativeLayout>

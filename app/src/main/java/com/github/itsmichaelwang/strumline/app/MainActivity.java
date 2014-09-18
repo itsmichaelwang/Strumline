@@ -12,8 +12,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 import java.util.concurrent.TimeUnit;
 
@@ -22,16 +25,26 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     private static final int SELECT_FILE_REQUEST = 1;
     private static final int UPDATE_PLAYBACK_POSITION = 2;
 
+    // UI ELEMENTS
+    private Button btnSongSelect;
+    private Button btnSetLoopStart;
+    private Button btnSetLoopStop;
+
+    private EditText txtCurPos;         // information fields
+    private EditText txtLoopStart;
+    private EditText txtLoopStop;
+
+    private TextView txtViewCurPos;     // labels for the information fields
+    private TextView txtViewLoopStart;
+    private TextView txtViewLoopStop;
+
     private MediaPlayer mediaPlayer = null;
     private RangeSeekBar<Integer> seekBar = null;
-    private TextView txtLoopstart;
-    private TextView txtLoopend;
-    private TextView txtPosition;
+
     private Integer songLength; // song length in ms
     private Integer loopStart = -1;
     private Integer loopEnd = -1;
 
-    // test
     private Handler mHandler;
 
     @Override
@@ -39,24 +52,30 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        txtLoopstart = (TextView) findViewById(R.id.txt_loopstart);
-        txtLoopend = (TextView) findViewById(R.id.txt_loopend);
-        txtPosition = (TextView) findViewById(R.id.txt_position);
+        // Instantiate UI elements
+        btnSongSelect = (Button) findViewById(R.id.btn_song_select);
+        btnSetLoopStart = (Button) findViewById(R.id.btn_set_loop_start);
+        btnSetLoopStop = (Button) findViewById(R.id.btn_set_loop_stop);
 
-        Button btnSelect = (Button) findViewById(R.id.btn_select);
-        Button btnLoopStart = (Button) findViewById(R.id.btn_loopstart);
-        Button btnLoopEnd = (Button) findViewById(R.id.btn_loopend);
+        txtCurPos = (EditText) findViewById(R.id.txt_cur_pos);
+        txtLoopStart = (EditText) findViewById(R.id.txt_loop_start);
+        txtLoopStop = (EditText) findViewById(R.id.txt_loop_stop);
 
-        btnSelect.setOnClickListener(this);
-        btnLoopStart.setOnClickListener(this);
-        btnLoopEnd.setOnClickListener(this);
+        txtViewCurPos = (TextView) findViewById(R.id.txtView_cur_position);
+        txtViewLoopStart = (TextView) findViewById(R.id.txtView_loop_start);
+        txtViewLoopStop = (TextView) findViewById(R.id.txtView_loop_stop);
+
+        // Set button listeners (see onClick() below)
+        btnSongSelect.setOnClickListener(this);
+        btnSetLoopStart.setOnClickListener(this);
+        btnSetLoopStop.setOnClickListener(this);
 
         mHandler = new Handler() {
             @Override
             public void handleMessage(Message inputMessage) {
                 if (inputMessage.what == UPDATE_PLAYBACK_POSITION) {
                     Integer currentPos = (Integer) inputMessage.obj;
-                    txtPosition.setText(
+                    txtCurPos.setText(
                         TimeUnit.MILLISECONDS.toMinutes(currentPos) + ":" +
                         String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(currentPos) % 60));
                 }
@@ -67,23 +86,36 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.btn_select:
+            case R.id.btn_song_select:
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.setType("audio/*");
                 startActivityForResult(intent, SELECT_FILE_REQUEST);
+
                 break;
-            case R.id.btn_loopstart:
+            case R.id.btn_set_loop_start:
                 int loopStart = mediaPlayer.getCurrentPosition();
                 seekBar.setSelectedMinValue(loopStart);
                 mediaPlayer.seekTo(loopStart);
                 updateLoop(loopStart, this.loopEnd);
                 break;
-            case R.id.btn_loopend:
+            case R.id.btn_set_loop_stop:
                 int loopEnd = mediaPlayer.getCurrentPosition();
                 seekBar.setSelectedMaxValue(loopEnd);
                 updateLoop(this.loopStart, loopEnd);
                 break;
         }
+    }
+
+    // Make relevant buttons and fields appear in Activity
+    private void showInterface() {
+        btnSetLoopStart.setVisibility(View.VISIBLE);
+        btnSetLoopStop.setVisibility(View.VISIBLE);
+        txtCurPos.setVisibility(View.VISIBLE);
+        txtLoopStart.setVisibility(View.VISIBLE);
+        txtLoopStop.setVisibility(View.VISIBLE);
+        txtViewCurPos.setVisibility(View.VISIBLE);
+        txtViewLoopStart.setVisibility(View.VISIBLE);
+        txtViewLoopStop.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -112,6 +144,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         switch (requestCode) {
             case SELECT_FILE_REQUEST:
                 if (resultCode == RESULT_OK) {
+                    showInterface();
+
                     Context context = this.getApplicationContext();
                     Uri myUri = data.getData();
                     mediaPlayer = MediaPlayer.create(context, myUri);
@@ -169,11 +203,11 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     public void updateLoop(Integer minValue, Integer maxValue) {
         loopStart = minValue;   // in milliseconds
         loopEnd = maxValue;
-        txtLoopstart.setText(
+        txtLoopStart.setText(
                 TimeUnit.MILLISECONDS.toMinutes(minValue) + ":" +
                 String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(minValue) % 60) + "." +
                 String.format("%03d", minValue % 1000));
-        txtLoopend.setText(
+        txtLoopStop.setText(
                 TimeUnit.MILLISECONDS.toMinutes(maxValue) + ":" +
                 String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(maxValue) % 60) + "." +
                 String.format("%03d", maxValue % 1000));
