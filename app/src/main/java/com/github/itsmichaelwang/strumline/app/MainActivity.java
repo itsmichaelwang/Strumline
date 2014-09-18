@@ -129,8 +129,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                         }
                     });
 
-                    // Multi-threaded looping operation that tracks the song's current position and
-                    // checks to see if song position has exceeded loopStop
+                    // Multi-threaded looping operation checks if song position has exceeded loopStop
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -140,19 +139,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                                     mediaPlayer.seekTo(loopStart);
                                 }
 
-                                mHandler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        int currentPosition = mediaPlayer.getCurrentPosition();
-                                        txtCurPos.setText(
-                                                TimeUnit.MILLISECONDS.toMinutes(currentPosition) + ":" +
-                                                        String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(currentPosition) % 60));
-
-                                    }
-                                });
-
                                 try {
-                                    Thread.sleep(250);
+                                    Thread.sleep(100);
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
@@ -160,6 +148,29 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                         }
                     }).start();
 
+                    // Another thread updates the UI with current song location at intervals
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            while(true) {
+                                mHandler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        int currentPosition = mediaPlayer.getCurrentPosition();
+                                        txtCurPos.setText(
+                                            TimeUnit.MILLISECONDS.toMinutes(currentPosition) + ":" +
+                                            String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(currentPosition) % 60));
+                                    }
+                                });
+
+                                try {
+                                    Thread.sleep(500);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }).start();
                 }
                 break;
         }
@@ -182,25 +193,20 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         // If the left slider has been moved, re-seek the mediaPlayer
         if (this.loopStart != loopStart) {
             mediaPlayer.seekTo(loopStart);
-            txtLoopStart.setText(
-                TimeUnit.MILLISECONDS.toMinutes(loopStart) + ":" +
-                String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(loopStart) % 60) + "." +
-                String.format("%03d", loopStart % 1000));
-        } else if (this.loopStop != loopStop) {
-            txtLoopStop.setText(
-                TimeUnit.MILLISECONDS.toMinutes(loopStop) + ":" +
-                String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(loopStop) % 60) + "." +
-                String.format("%03d", loopStop % 1000));
         }
+
+        txtLoopStart.setText(
+            TimeUnit.MILLISECONDS.toMinutes(loopStart) + ":" +
+            String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(loopStart) % 60) + "." +
+            String.format("%03d", loopStart % 1000));
+        txtLoopStop.setText(
+            TimeUnit.MILLISECONDS.toMinutes(loopStop) + ":" +
+            String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(loopStop) % 60) + "." +
+            String.format("%03d", loopStop % 1000));
 
         // Finally, update the stored values
         this.loopStart = loopStart;     // again, in milliseconds
         this.loopStop = loopStop;
-    }
-
-    // update the text field with the current position
-    private void updateCurrentPosition() {
-
     }
 
     @Override
