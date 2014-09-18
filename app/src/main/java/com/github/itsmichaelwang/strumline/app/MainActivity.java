@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Handler;
-import android.os.Message;
+import android.os.Looper;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -16,16 +16,13 @@ import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends ActionBarActivity implements View.OnClickListener{
 
     private static final int SELECT_FILE_REQUEST = 1;
-    private static final int UPDATE_PLAYBACK_POSITION = 2;
 
-    // UI ELEMENTS
+    // UI elements
     private Button btnSongSelect;
     private Button btnSetLoopStart;
     private Button btnSetLoopStop;
@@ -38,14 +35,15 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     private TextView txtViewLoopStart;
     private TextView txtViewLoopStop;
 
+    private boolean firstLoad = true;   // keep track of first load for special instruction
     private MediaPlayer mediaPlayer = null;
+
     private RangeSeekBar<Integer> seekBar = null;
+    private int loopStart = 0;              // start and stop time of the loop, in ms from song start
+    private int loopStop;
 
-    private Integer songLength; // song length in ms
-    private Integer loopStart = -1;
-    private Integer loopEnd = -1;
-
-    private Handler mHandler;
+    // Link handler to Main/UI thread for UI operations later
+    private Handler mHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,8 +67,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         btnSongSelect.setOnClickListener(this);
         btnSetLoopStart.setOnClickListener(this);
         btnSetLoopStop.setOnClickListener(this);
-
-        mHandler = new Handler();
     }
 
     @Override
@@ -80,18 +76,91 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.setType("audio/*");
                 startActivityForResult(intent, SELECT_FILE_REQUEST);
-
                 break;
             case R.id.btn_set_loop_start:
+                // Set current position as new loopStart
                 int loopStart = mediaPlayer.getCurrentPosition();
+                updateLoopBounds(loopStart, this.loopStop);
                 seekBar.setSelectedMinValue(loopStart);
-                mediaPlayer.seekTo(loopStart);
-                updateLoop(loopStart, this.loopEnd);
                 break;
             case R.id.btn_set_loop_stop:
-                int loopEnd = mediaPlayer.getCurrentPosition();
-                seekBar.setSelectedMaxValue(loopEnd);
-                updateLoop(this.loopStart, loopEnd);
+                // Set current position as new loopStop
+                int loopStop = mediaPlayer.getCurrentPosition();
+                updateLoopBounds(this.loopStart, loopStop);
+                seekBar.setSelectedMaxValue(loopStop);
+                break;
+        }
+    }
+
+    // Actual data handling
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case SELECT_FILE_REQUEST:
+                if (resultCode == RESULT_OK) {
+                    if (firstLoad) {
+                        showInterface();
+                        firstLoad = false;
+                    }
+
+                    Context context = this.getApplicationContext();
+                    Uri myUri = data.getData();
+                    // If the mediaPlayer is already being used, reset it when selecting a new song
+                    if (mediaPlayer != null) {
+                        mediaPlayer.stop();
+                        mediaPlayer.release();
+                        mediaPlayer = null;
+                    }
+                    mediaPlayer = MediaPlayer.create(context, myUri);
+                    mediaPlayer.start();
+
+                    // Create a SeekBar with the width of the song's length
+                    int songLength = mediaPlayer.getDuration();
+                    seekBar = new RangeSeekBar<Integer>(0, songLength, context);
+                    RelativeLayout layout = (RelativeLayout) findViewById(R.id.rl1);
+                    layout.addView(seekBar);
+
+                    updateLoopBounds(0, songLength);
+
+                    seekBar.setOnRangeSeekBarChangeListener(new RangeSeekBar.OnRangeSeekBarChangeListener<Integer>() {
+                        @Override
+                        public void onRangeSeekBarValuesChanged(RangeSeekBar<?> bar, Integer minValue, Integer maxValue) {
+                            updateLoopBounds(minValue, maxValue);
+                        }
+                    });
+
+                    // Multi-threaded looping operation that tracks the song's current position and
+                    // checks to see if song position has exceeded loopStop
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            while (true) {
+                                int currentPosition = mediaPlayer.getCurrentPosition();
+                                if (currentPosition > loopStop) {
+                                    mediaPlayer.seekTo(loopStart);
+                                }
+
+                                mHandler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        int currentPosition = mediaPlayer.getCurrentPosition();
+                                        txtCurPos.setText(
+                                                TimeUnit.MILLISECONDS.toMinutes(currentPosition) + ":" +
+                                                        String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(currentPosition) % 60));
+
+                                    }
+                                });
+
+                                try {
+                                    Thread.sleep(250);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }).start();
+
+                }
                 break;
         }
     }
@@ -108,105 +177,30 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         txtViewLoopStop.setVisibility(View.VISIBLE);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
+    // update global variables for loopStart and loopStop, update the UI, and seek new position
+    private void updateLoopBounds(int loopStart, int loopStop) {
+        // If the left slider has been moved, re-seek the mediaPlayer
+        if (this.loopStart != loopStart) {
+            mediaPlayer.seekTo(loopStart);
+            txtLoopStart.setText(
+                TimeUnit.MILLISECONDS.toMinutes(loopStart) + ":" +
+                String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(loopStart) % 60) + "." +
+                String.format("%03d", loopStart % 1000));
+        } else if (this.loopStop != loopStop) {
+            txtLoopStop.setText(
+                TimeUnit.MILLISECONDS.toMinutes(loopStop) + ":" +
+                String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(loopStop) % 60) + "." +
+                String.format("%03d", loopStop % 1000));
         }
-        return super.onOptionsItemSelected(item);
+
+        // Finally, update the stored values
+        this.loopStart = loopStart;     // again, in milliseconds
+        this.loopStop = loopStop;
     }
 
-    // Actual data handling
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-            case SELECT_FILE_REQUEST:
-                if (resultCode == RESULT_OK) {
-                    showInterface();
+    // update the text field with the current position
+    private void updateCurrentPosition() {
 
-                    Context context = this.getApplicationContext();
-                    Uri myUri = data.getData();
-                    mediaPlayer = MediaPlayer.create(context, myUri);
-                    mediaPlayer.start();
-
-                    songLength = mediaPlayer.getDuration();
-                    seekBar = new RangeSeekBar<Integer>(0, songLength, context);
-
-                    RelativeLayout layout = (RelativeLayout) findViewById(R.id.rl1);
-                    layout.addView(seekBar);
-                    updateLoop(seekBar.getAbsoluteMinValue(), seekBar.getAbsoluteMaxValue());
-
-                    seekBar.setOnRangeSeekBarChangeListener(new RangeSeekBar.OnRangeSeekBarChangeListener<Integer>() {
-                        @Override
-                        public void onRangeSeekBarValuesChanged(RangeSeekBar<?> bar, Integer minValue, Integer maxValue) {
-                            // Update the song if the left slider has been moved
-                            if (!loopStart.equals(minValue)) {
-                                mediaPlayer.seekTo(minValue);
-                            }
-
-                            updateLoop(minValue, maxValue);
-                        }
-                    });
-
-                    // Start the runnable from the handler
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            while (true) {
-                                Integer currentPosition = mediaPlayer.getCurrentPosition();
-                                // Check if song has run longer than allowed
-                                if (currentPosition > loopEnd) {
-                                    mediaPlayer.seekTo(loopStart);
-                                }
-
-                                mHandler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        int currentPos = mediaPlayer.getCurrentPosition();
-                                        txtCurPos.setText(
-                                            TimeUnit.MILLISECONDS.toMinutes(currentPos) + ":" +
-                                            String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(currentPos) % 60));
-                                    }
-                                });
-
-                                try {
-                                    Thread.sleep(500);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-                    }).start();
-
-                }
-                break;
-        }
-    }
-
-    // update class variables and fill in text
-    public void updateLoop(Integer minValue, Integer maxValue) {
-        loopStart = minValue;   // in milliseconds
-        loopEnd = maxValue;
-        txtLoopStart.setText(
-                TimeUnit.MILLISECONDS.toMinutes(minValue) + ":" +
-                String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(minValue) % 60) + "." +
-                String.format("%03d", minValue % 1000));
-        txtLoopStop.setText(
-                TimeUnit.MILLISECONDS.toMinutes(maxValue) + ":" +
-                String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(maxValue) % 60) + "." +
-                String.format("%03d", maxValue % 1000));
     }
 
     @Override
@@ -223,5 +217,24 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
             mediaPlayer.start();
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
