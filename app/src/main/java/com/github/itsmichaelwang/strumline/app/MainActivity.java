@@ -69,7 +69,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         btnSetLoopStart.setOnClickListener(this);
         btnSetLoopStop.setOnClickListener(this);
 
-        // Start the mediaplayer service
+        // Start the MediaPlayer service
         mediaPlayer = new MediaPlayer();
     }
 
@@ -107,6 +107,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                         firstLoad = false;
                     }
 
+                    // load mediaPlayer with selected song
                     Context context = this.getApplicationContext();
                     Uri myUri = data.getData();
                     mediaPlayer.reset();
@@ -144,7 +145,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                         public void run() {
                             while (true) {
                                 int currentPosition = mediaPlayer.getCurrentPosition();
-                                if (currentPosition > loopStop) {
+                                if (currentPosition > loopStop || currentPosition < loopStart) {
                                     mediaPlayer.seekTo(loopStart);
                                 }
 
