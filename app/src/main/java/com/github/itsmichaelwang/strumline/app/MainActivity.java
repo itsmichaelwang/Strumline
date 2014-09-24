@@ -16,6 +16,7 @@ import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends ActionBarActivity implements View.OnClickListener{
@@ -27,11 +28,11 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     private Button btnSetLoopStart;
     private Button btnSetLoopStop;
 
-    private EditText txtCurPos;         // information fields
+    private EditText txtCurPos;         // fields that tell you the time of current song position, and loop boundaries
     private EditText txtLoopStart;
     private EditText txtLoopStop;
 
-    private TextView txtViewCurPos;     // labels for the information fields
+    private TextView txtViewCurPos;     // text labels for the above fields
     private TextView txtViewLoopStart;
     private TextView txtViewLoopStop;
 
@@ -50,7 +51,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Instantiate UI elements
+        // Instantiate UI elements (note, everything is hidden except btnSongSelect at first)
         btnSongSelect = (Button) findViewById(R.id.btn_song_select);
         btnSetLoopStart = (Button) findViewById(R.id.btn_set_loop_start);
         btnSetLoopStop = (Button) findViewById(R.id.btn_set_loop_stop);
@@ -67,6 +68,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         btnSongSelect.setOnClickListener(this);
         btnSetLoopStart.setOnClickListener(this);
         btnSetLoopStop.setOnClickListener(this);
+
+        // Start the mediaplayer service
+        mediaPlayer = new MediaPlayer();
     }
 
     @Override
@@ -105,19 +109,24 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
                     Context context = this.getApplicationContext();
                     Uri myUri = data.getData();
-                    // If the mediaPlayer is already being used, reset it when selecting a new song
-                    if (mediaPlayer != null) {
-                        mediaPlayer.stop();
-                        mediaPlayer.release();
-                        mediaPlayer = null;
+                    mediaPlayer.reset();
+                    try {
+                        mediaPlayer.setDataSource(context, myUri);
+                        mediaPlayer.prepare();
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                    mediaPlayer = MediaPlayer.create(context, myUri);
+                    mediaPlayer.setLooping(true);
                     mediaPlayer.start();
 
-                    // Create a SeekBar with the width of the song's length
+                    // Create a SeekBar with the width of the song's length, if it hasn't already been made
+                    RelativeLayout layout = (RelativeLayout) findViewById(R.id.rl1);
+                    if (seekBar != null) {
+                        layout.removeView(seekBar);
+                        seekBar = null;
+                    }
                     int songLength = mediaPlayer.getDuration();
                     seekBar = new RangeSeekBar<Integer>(0, songLength, context);
-                    RelativeLayout layout = (RelativeLayout) findViewById(R.id.rl1);
                     layout.addView(seekBar);
 
                     updateLoopBounds(0, songLength);
