@@ -109,4 +109,15 @@
         android:layout_toRightOf="@+id/txt_loop_stop"
         android:visibility="gone" />
 
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/btn_play_pause"
+        android:layout_alignTop="@+id/btn_song_select"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:visibility="gone"
+        android:text="Pause" />
+
 </RelativeLayout>

@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.view.DragEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,6 +28,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     private Button btnSongSelect;
     private Button btnSetLoopStart;
     private Button btnSetLoopStop;
+    private Button btnPlayPause;
 
     private EditText txtCurPos;         // fields that tell you the time of current song position, and loop boundaries
     private EditText txtLoopStart;
@@ -38,6 +40,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
     private boolean firstLoad = true;   // keep track of first load for special instruction
     private MediaPlayer mediaPlayer = null;
+    private boolean songPaused = false;
 
     private RangeSeekBar<Integer> seekBar = null;
     private int loopStart = 0;              // start and stop time of the loop, in ms from song start
@@ -55,6 +58,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         btnSongSelect = (Button) findViewById(R.id.btn_song_select);
         btnSetLoopStart = (Button) findViewById(R.id.btn_set_loop_start);
         btnSetLoopStop = (Button) findViewById(R.id.btn_set_loop_stop);
+        btnPlayPause = (Button) findViewById(R.id.btn_play_pause);
 
         txtCurPos = (EditText) findViewById(R.id.txt_cur_pos);
         txtLoopStart = (EditText) findViewById(R.id.txt_loop_start);
@@ -68,6 +72,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         btnSongSelect.setOnClickListener(this);
         btnSetLoopStart.setOnClickListener(this);
         btnSetLoopStop.setOnClickListener(this);
+        btnPlayPause.setOnClickListener(this);
 
         // Start the MediaPlayer service
         mediaPlayer = new MediaPlayer();
@@ -93,6 +98,16 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 updateLoopBounds(this.loopStart, loopStop);
                 seekBar.setSelectedMaxValue(loopStop);
                 break;
+            case R.id.btn_play_pause:
+                if (songPaused) {
+                    songPaused = false;
+                    btnPlayPause.setText("Pause");
+                    mediaPlayer.start();
+                } else {
+                    songPaused = true;
+                    btnPlayPause.setText("Play");
+                    mediaPlayer.pause();
+                }
         }
     }
 
@@ -177,6 +192,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     private void showInterface() {
         btnSetLoopStart.setVisibility(View.VISIBLE);
         btnSetLoopStop.setVisibility(View.VISIBLE);
+        btnPlayPause.setVisibility(View.VISIBLE);
         txtCurPos.setVisibility(View.VISIBLE);
         txtLoopStart.setVisibility(View.VISIBLE);
         txtLoopStop.setVisibility(View.VISIBLE);
@@ -219,7 +235,11 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     public void onResume() {
         super.onResume();
         if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
-            mediaPlayer.start();
+            if (songPaused) {
+                mediaPlayer.pause();
+            } else {
+                mediaPlayer.start();
+            }
         }
     }
 
