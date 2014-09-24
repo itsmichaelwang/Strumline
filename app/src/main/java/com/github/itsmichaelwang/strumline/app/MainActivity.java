@@ -102,6 +102,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         switch (requestCode) {
             case SELECT_FILE_REQUEST:
                 if (resultCode == RESULT_OK) {
+                    // only show hidden UI elements the first time
                     if (firstLoad) {
                         showInterface();
                         firstLoad = false;
@@ -160,7 +161,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                                 });
 
                                 try {
-                                    Thread.sleep(100);
+                                    Thread.sleep(250);
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
@@ -186,19 +187,20 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
     // update global variables for loopStart and loopStop, update the UI, and seek new position
     private void updateLoopBounds(int loopStart, int loopStop) {
+        // first update the UI, so it is accurate
+        txtLoopStart.setText(
+            TimeUnit.MILLISECONDS.toMinutes(loopStart) + ":" +
+                String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(loopStart) % 60) + "." +
+                String.format("%03d", loopStart % 1000));
+        txtLoopStop.setText(
+            TimeUnit.MILLISECONDS.toMinutes(loopStop) + ":" +
+                String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(loopStop) % 60) + "." +
+                String.format("%03d", loopStop % 1000));
+
         // If the left slider has been moved, re-seek the mediaPlayer
         if (this.loopStart != loopStart) {
             mediaPlayer.seekTo(loopStart);
         }
-
-        txtLoopStart.setText(
-            TimeUnit.MILLISECONDS.toMinutes(loopStart) + ":" +
-            String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(loopStart) % 60) + "." +
-            String.format("%03d", loopStart % 1000));
-        txtLoopStop.setText(
-            TimeUnit.MILLISECONDS.toMinutes(loopStop) + ":" +
-            String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(loopStop) % 60) + "." +
-            String.format("%03d", loopStop % 1000));
 
         // Finally, update the stored values
         this.loopStart = loopStart;     // again, in milliseconds
