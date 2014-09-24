@@ -149,32 +149,18 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                                     mediaPlayer.seekTo(loopStart);
                                 }
 
-                                try {
-                                    Thread.sleep(100);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-                    }).start();
-
-                    // Another thread updates the UI with current song location at intervals
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            while(true) {
                                 mHandler.post(new Runnable() {
                                     @Override
                                     public void run() {
                                         int currentPosition = mediaPlayer.getCurrentPosition();
                                         txtCurPos.setText(
-                                            TimeUnit.MILLISECONDS.toMinutes(currentPosition) + ":" +
-                                            String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(currentPosition) % 60));
+                                                TimeUnit.MILLISECONDS.toMinutes(currentPosition) + ":" +
+                                                        String.format("%02d", TimeUnit.MILLISECONDS.toSeconds(currentPosition) % 60));
                                     }
                                 });
 
                                 try {
-                                    Thread.sleep(500);
+                                    Thread.sleep(100);
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
